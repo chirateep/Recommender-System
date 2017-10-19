@@ -11,6 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provider class that builds the mean rating item scorer, computing item means from the
@@ -52,17 +57,27 @@ public class ItemMeanModelProvider implements Provider<ItemMeanModel> {
     @Override
     public ItemMeanModel get() {
         // TODO Set up data structures for computing means
-
+        Long2DoubleOpenHashMap sumRatingMovies = new Long2DoubleOpenHashMap();
+        Long2DoubleOpenHashMap countRatingMovies = new Long2DoubleOpenHashMap();
         try (ObjectStream<Rating> ratings = dao.query(Rating.class).stream()) {
             for (Rating r: ratings) {
                 // this loop will run once for each rating in the data set
                 // TODO process this rating
+                Long movie = (Long) r.get("item");
+                Double rating = (Double) r.get("rating");
+                sumRatingMovies.addTo(movie, rating);
+                countRatingMovies.addTo(movie, 1);
             }
         }
 
-        Long2DoubleOpenHashMap means = new Long2DoubleOpenHashMap();
+         Long2DoubleOpenHashMap means = new Long2DoubleOpenHashMap();
         // TODO Finalize means to store them in the mean model
+        for (Long key: countRatingMovies.keySet()) {
+            Double meanEachMovie = sumRatingMovies.get(key) / countRatingMovies.get(key);
+            means.addTo(key, meanEachMovie);
+        }
 
+        logger.debug(String.valueOf(means));
         logger.info("computed mean ratings for {} items", means.size());
         return new ItemMeanModel(means);
     }
