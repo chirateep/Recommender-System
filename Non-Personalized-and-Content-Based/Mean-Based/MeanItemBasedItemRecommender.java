@@ -1,10 +1,13 @@
 package org.lenskit.mooc.nonpers.mean;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
+import org.lenskit.api.ItemBasedItemRecommender;
 import org.lenskit.api.Result;
 import org.lenskit.api.ResultList;
 import org.lenskit.api.ResultMap;
 import org.lenskit.basic.AbstractItemBasedItemRecommender;
+import org.lenskit.results.BasicResult;
+import org.lenskit.results.BasicResultMap;
 import org.lenskit.results.Results;
 import org.lenskit.util.collections.LongUtils;
 import org.slf4j.Logger;
@@ -12,9 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * An item scorer that scores each item with its mean rating.
@@ -79,14 +80,20 @@ public class MeanItemBasedItemRecommender extends AbstractItemBasedItemRecommend
      * </ol>
      *
      * @param n The number of items to recommend.  If this is negative, then recommend all possible items.
-     * @param items The items to score.
+     * @param items The itDouems to score.
      * @return A {@link ResultMap} containing the scores.
      */
     private ResultList recommendItems(int n, LongSet items) {
         List<Result> results = new ArrayList<>();
-
         // TODO Find the top N items by mean rating
 
+        for (Long item : items) {
+            Double meanEachItem = model.getMeanRating(item);
+            Result meanItem = new BasicResult(item, meanEachItem);
+            results.add(meanItem);
+        }
+
+        logger.debug(String.valueOf(results));
         return Results.newResultList(results);
     }
 }
