@@ -76,8 +76,6 @@ public class ItemMeanModelProvider implements Provider<ItemMeanModel> {
             Double meanEachMovie = sumRatingMovies.get(key) / countRatingMovies.get(key);
             means.addTo(key, meanEachMovie);
         }
-
-        logger.debug(String.valueOf(means));
         logger.info("computed mean ratings for {} items", means.size());
         return new ItemMeanModel(means);
     }
