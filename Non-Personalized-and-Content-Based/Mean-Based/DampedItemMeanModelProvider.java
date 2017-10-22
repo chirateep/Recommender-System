@@ -62,7 +62,31 @@ public class DampedItemMeanModelProvider implements Provider<ItemMeanModel> {
     @Override
     public ItemMeanModel get() {
         // TODO Compute damped means
+        Long2DoubleOpenHashMap sumRatingItems = new Long2DoubleOpenHashMap();
+        Long2DoubleOpenHashMap countRatingItems = new Long2DoubleOpenHashMap();
+        Double totalSumRating = 0.0;
+        Double totalCountRaing = 0.0;
+        try (ObjectStream<Rating> ratings = dao.query(Rating.class).stream()) {
+            for (Rating r:ratings) {
+                Long item = (Long) r.get("item");
+                Double rating = (Double) r.get("rating");
+                sumRatingItems.addTo(item, rating);
+                countRatingItems.addTo(item, 1.0);
+                totalSumRating = totalSumRating + rating;
+                totalCountRaing = totalCountRaing + 1.0;
+            }
+        }
+
+        Double totalMeanRating = totalSumRating / totalCountRaing;
+        Long2DoubleOpenHashMap dampedMeans = new Long2DoubleOpenHashMap();
+
+        for (Long key: countRatingItems.keySet()) {
+            Double dampedMeanEachItem = (sumRatingItems.get(key) + (damping * totalMeanRating))
+                                        / (countRatingItems.get(key) + damping);
+            dampedMeans.addTo(key, dampedMeanEachItem);
+        }
         // TODO Remove the line below when you have finished
-        throw new UnsupportedOperationException("damped mean not implemented");
+//        throw new UnsupportedOperationException("damped mean not implemented");
+        return new ItemMeanModel(dampedMeans);
     }
 }
