@@ -8,15 +8,21 @@ import org.lenskit.inject.Transient;
 import org.lenskit.util.IdBox;
 import org.lenskit.util.collections.LongUtils;
 import org.lenskit.util.io.ObjectStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Build a model for basic association rules.  This class computes the association for all pairs of items.
  */
 public class BasicAssociationModelProvider implements Provider<AssociationModel> {
+    private static final Logger logger = LoggerFactory.getLogger(BasicAssociationModelProvider.class);
     private final DataAccessObject dao;
 
     @Inject
@@ -71,8 +77,14 @@ public class BasicAssociationModelProvider implements Provider<AssociationModel>
                 LongSortedSet yUsers = yEntry.getValue();
 
                 // TODO Compute P(Y & X) / P(X) and store in itemScores
-            }
 
+                Set<Long> xOnYUser = new HashSet<>(yUsers);
+                xOnYUser.retainAll(xUsers);
+                double probxOnYUser = Double.valueOf(xOnYUser.size()) / Double.valueOf(allUsers.size());
+                double probxUsers = Double.valueOf(xUsers.size()) / Double.valueOf(allUsers.size());
+                double score = probxOnYUser / probxUsers;
+                itemScores.put(yId, score);
+            }
             // save the score map to the main map
             assocMatrix.put(xId, itemScores);
         }

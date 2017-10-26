@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Build an association rule model using a lift metric.
@@ -73,7 +75,20 @@ public class LiftAssociationModelProvider implements Provider<AssociationModel> 
             Long2DoubleMap itemScores = new Long2DoubleOpenHashMap();
 
             // TODO Compute lift association formulas for all other 'Y' items with respect to this 'X'
+            for (Long2ObjectMap.Entry<LongSortedSet> yEntry: itemUsers.long2ObjectEntrySet()) {
+                long yId = yEntry.getLongKey();
+                LongSortedSet yUsers = yEntry.getValue();
 
+                // TODO Compute P(Y & X) / P(X) and store in itemScores
+
+                Set<Long> xOnYUser = new HashSet<>(yUsers);
+                xOnYUser.retainAll(xUsers);
+                double probxOnYUser = Double.valueOf(xOnYUser.size()) / Double.valueOf(allUsers.size());
+                double probxUsers = Double.valueOf(xUsers.size()) / Double.valueOf(allUsers.size());
+                double probyUsers = Double.valueOf(yUsers.size()) / Double.valueOf(allUsers.size());
+                double score = probxOnYUser / (probxUsers * probyUsers);
+                itemScores.put(yId, score);
+            }
             // save the score map to the main map
             assocMatrix.put(xId, itemScores);
         }
